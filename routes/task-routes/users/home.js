@@ -14,7 +14,7 @@ const {userAuth}=require('../../../middlewares/auth')
 //503=Service unavailable
 //401=Unauthorized
 
-//Registering a user
+//Registering a user 
 router.post("/", async (req, res) => {
   const { name, email, password, age } = req.body;
   const user=  await User.findOne({ email })
