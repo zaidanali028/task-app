@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 const User = new mongoose.Schema(
   {
     name: {
@@ -58,7 +57,20 @@ const User = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+//Am saying brfore saving a user,this function should execute
+User.pre('save', async function(next){
+    // before saving a user
+    const user=this
+    //checking if password was modified ny the user
+    if(user.isModified('password')){
+        user.password=await bcrypt.hash(user.password,10)
+    }
+    next()
+})
+
 //Adding a function to the user schema
+//We dont know the user yet,so we use .statics
 User.statics.loginFunc = async (email, password) => {
   //the userMOdel can be accessessed from here,don't worry :)
   const user = await userMOdel.findOne({ email: email });
@@ -76,6 +88,7 @@ User.statics.loginFunc = async (email, password) => {
 };
 
 //Adding a function to a single User
+//We know the user,so we use .methods
 User.methods.AuhthToken = async function () {
     //Getting the specific user who invoked this function
     const user = this;

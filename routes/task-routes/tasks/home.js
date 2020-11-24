@@ -2,6 +2,7 @@ const express=require('express')
 
 const User = require('../../../models/User')
 const Task=require('../../../models/task')
+const {userAuth}=require('../../../middlewares/auth')
 const router=express.Router()
 
 //Status Codes
@@ -39,10 +40,10 @@ router.post('/', async (req,res)=>{
 
 
 //Getting all tasks
-router.get('/', async (req,res)=>{
+router.get('/',userAuth, async (req,res)=>{
    await Task.find({})
     .then(tasks=>{
-        res.status(200)
+     return res.status(200)
         .send(tasks)
     })
     .catch(err=>res.status(400).send(err))
