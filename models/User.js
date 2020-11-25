@@ -87,14 +87,20 @@ User.statics.loginFunc = async (email, password) => {
   
 };
 
-//Adding a function to a single User
-//We know the user,so wuserAuth,ser's Field in the database
-  //   user.userTokens = await user.userTokens.concat({token });
-  //   await  user.save()
 
  
 
+  //Generate Json web token and store in the database
+User.methods.AuhthToken = async function(){
+  const user = this;
+  const token = jwt.sign({ _id: user._id.toString() }, 'myfirstjsw');
+  user.userTokens = user.userTokens.concat({token});
+  await user.save();
+  return token;
+}
 
-  // }; 
+
+
+
 const userMOdel = mongoose.model("users", User);
 module.exports = userMOdel;
