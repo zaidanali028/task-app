@@ -7,11 +7,12 @@ module.exports={
     try{
       const token=req.header('Authorization').replace('Bearer ','')
       const verifyData=jwt.verify(token,'myfirstjsw')
-      const user=await user.findOne({_id:verifyData._id.toString(),'userTokens.token':token})
+      const user = await User.findOne({_id:verifyData._id,'userTokens.token':token})
       if(!user){
         throw new Error()
       }
 
+      req.token = token
       req.user=user
       next()
     }
