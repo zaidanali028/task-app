@@ -3,7 +3,7 @@ const User = require("../../../models/User");
 const Task = require("../../../models/task");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
-const {userAuth}=require('../../../middlewares/auth')
+const auth =require('../../../middlewares/auth')
 
 //Status Codes
 //200=Ok!
@@ -59,7 +59,7 @@ router.get("/:id", async (req, res) => {
 });
 
 //Getting all users
-router.get("/", userAuth,async (req, res) => {
+router.get("/", user ,async (req, res) => {
   await User.find({})
     .then((users) => {
       res.status(200).send(users);
