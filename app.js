@@ -4,7 +4,7 @@ const dbUrI=process.env.BD_URI
 const express=require('express')
 const app=express()
 
-
+const port=process.env.PORT
 
 
 app.use(express.urlencoded({extended:true}))
@@ -14,11 +14,9 @@ const taskRoute=require('./routes/task-routes/tasks/home')
 
 app.use('/user',userRoute)
 app.use('/task',taskRoute)
-const port=process.env.PORT
 
 const User=require('./models/User')
 const Taskdb=require('./models/task')
-const { getMaxListeners } = require('./models/User')
 //console.log(dbUrI)
 //db connection
 mongoose
@@ -34,4 +32,5 @@ mongoose
 
 app.listen(port,()=>{
     console.log(`App listening on port ${port}...`)
+    console.log(dbUrI,port)
 })

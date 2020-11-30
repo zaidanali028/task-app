@@ -36,6 +36,7 @@ router.post("/", async (req, res) => {
 });
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log(req.body)
   const user = await User.loginFunc(email, password);
   //user.AuthToken is referencing the authenticated user above
   const token = await user.AuhthToken();
