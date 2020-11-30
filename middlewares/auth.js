@@ -9,7 +9,9 @@ const auth = async (req, res, next)=>{
         const verifyData = jwt.verify(token, 'put your jwt secret here');
         const user = await User.findOne({_id:verifyData._id, 'userTokens.token':token});
 
-        if(!user) {throw new Error()};
+        if(!user) {
+            throw new Error()
+        };
         req.token = token
         req.user = user;
         next();
