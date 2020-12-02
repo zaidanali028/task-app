@@ -8,6 +8,12 @@ const task=new mongoose.Schema({
     completed:{
         type:Boolean,
         default:false
+    },
+    worker:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true,
+        ref:'users'
+        
     }    
 },{timestamps:true})
 

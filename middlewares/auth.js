@@ -1,24 +1,23 @@
-const User = require("../models/User");
-const jwt = require("jsonwebtoken");
+const jwt=require('jsonwebtoken')
+const User=require('../models/User')
 
-module.exports = {
-  userAuth: (req, res, next) => {
-    const token = req.header("Authorization").replace("Bearer ", "");
-    //  console.log(token)
-    const verifyData = jwt.verify(token, "myfirstjsw");
-    //  console.log(verifyData._id)
-    const user = User.findOne({
-      _id: verifyData._id.toString(),
-      "userTokens.token": token,
-    });
-    //'userTokens.token':'token' am checking the user the server returned if he/she still has the token he/she provided
-    //in the req.header
-    //console.log('Am working!')
-    if (!user) {
-      throw new Error();
+const auth= async (req,res,next)=>{
+    try{
+        const token=req.header('Authorization').replace('Bearer ','')
+        //myfirstjsw
+        const decoded=jwt.verify(token,'myfirstjsw')
+        const user=await User.findOne({_id:decoded._id,'userTokens.token':token})
+        if(!user){
+            throw new Error()
+        }
+        req.user=user
+        req.token=token
+        next()
     }
-    req.user = user;
-    next();
-    return res.status(401).send({ error: "Invalid User" });
-  },
-};
+    catch(e){
+        res.status(401).send({error:'Please login'})
+    }
+
+}
+
+module.exports=auth

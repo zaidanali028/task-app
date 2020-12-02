@@ -34,3 +34,27 @@ app.listen(port,()=>{
     console.log(`App listening on port ${port}...`)
     console.log(dbUrI,port)
 })
+
+//#############################============TESTINGS====================############################
+
+ 
+//Finding Users From Tasks
+// const main=async ()=>{
+//    const task= await Taskdb.findById('5fc55115edbdf407fc447566')
+//    //console.log(task)
+//     await task.populate('worker').execPopulate()
+//    // console.log(task.worker)
+
+// }
+// main()
+
+//Finding Tasks For A User
+const mainTwo=async ()=>{
+  const taskAuthor=await User.findById('5fc5277ad5284c1ef4c24fa1')
+ // console.log(taskAuthor)
+await taskAuthor.populate('Tasks').execPopulate()
+//console.log(taskAuthor.Tasks)
+
+
+}
+mainTwo()

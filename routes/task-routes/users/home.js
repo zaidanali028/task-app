@@ -3,8 +3,7 @@ const User = require("../../../models/User");
 const Task = require("../../../models/task");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
-const {userAuth}=require('../../../middlewares/auth')
-
+const auth = require("../../../middlewares/auth");
 //Status Codes
 //200=Ok!
 //201=Something has been Created!
@@ -14,29 +13,28 @@ const {userAuth}=require('../../../middlewares/auth')
 //503=Service unavailable
 //401=Unauthorized
 
-//Registering a user 
+//Registering a user
 router.post("/", async (req, res) => {
   const { name, email, password, age } = req.body;
-  const user=  await User.findOne({ email })
-    if (user) {
-      res.status(400).send({ error: "User already Exists!" });
-    }
-    const newUser = await new User({
-      name,
-      email,
-      password,
-      age,
-    });
-    await newUser.save()
-   const token=await newUser.AuhthToken()
+  const user = await User.findOne({ email });
+  if (user) {
+    res.status(400).send({ error: "User already Exists!" });
+  }
+  const newUser = await new User({
+    name,
+    email,
+    password,
+    age,
+  });
+  await newUser.save();
+  const token = await newUser.AuhthToken();
 
-    res.status(201).send({token,newUser})
-   
-  
+  res.status(201).send({ token, newUser });
 });
+//Login in User
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body)
+  // console.log(req.body)
   const user = await User.loginFunc(email, password);
   //user.AuthToken is referencing the authenticated user above
   const token = await user.AuhthToken();
@@ -44,107 +42,106 @@ router.post("/login", async (req, res) => {
   res.status(200).send({ user, token });
 });
 
-//Getting specific user
-router.get("/:id", async (req, res) => {
-  const userId = req.params.id;
-  await User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send("User not found");
-      }
-      res.status(200).send(user);
-    })
-    .catch((err) => {
-      res.status(400).send(err);
+//Logout with authenticated user's token
+router.post("/logout", auth, async (req, res) => {
+  try {
+    const user = req.user;
+    const userToken = req.token;
+    //console.log(user,userToken)
+    user.userTokens = user.userTokens.filter((token) => {
+      return token.token != userToken;
+      //The above line is simple,if the  gotten looped token is not equal to the user's token,then I will leave it in the array
+      //And remove it if otherwise
     });
+    await user.save();
+    res.status(200).send({ success: "Successfully Killed Session" });
+  } catch (e) {
+    res.status(500).send({ error: e });
+  }
 });
 
-//Getting all users
-router.get("/", userAuth,async (req, res) => {
-  await User.find({})
-    .then((users) => {
-      res.status(200).send(users);
-    })
-    .catch((err) => {
-      res.status(500).send(err);
-    });
+//logout all authenticated tokens
+router.post("/logloutall", auth, async (req, res) => {
+  try {
+    const user = req.user;
+    const userToken = req.token;
+    user.userTokens.splice(0, user.userTokens.length);
+    //Am looping through the userTokens array and removing all tokens from 0 index upto the last one
+    await user.save();
+    res.status(200).send({ success: "Deleted all user tokens" });
+  } catch (e) {
+    res.status(500).send({ error: "Error deleting tokens" });
+  }
 });
 
-router.patch("/:id", async (req, res) => {
-  const { id } = req.params;
+//Getting authenticated an user
+router.get("/profile", auth, async (req, res) => {
+  const user = req.user;
+  res.status(200).send(user);
+});
+
+//Editing userProfile
+router.patch("/me", auth, (req, res) => {
   const { body } = req;
   //The body constant will return the fields the user changed.
   //maybe if its name and email,that place will be {email,name}=req.body
-
-  //Checking if user update is valid
+  const user = req.user;
+  // //Checking if user update is valid
   let userUpdate = Object.keys(body);
   //am getting the keys from the object the user is sending to the erver. i.e:name,email,age,password
-  let allowedUpdates = ["name", "email", "age",];
+  let allowedUpdates = ["name", "email", "age"];
   let canUpdate = userUpdate.every((update) => {
     //checking if the key is in the allowedUpdates array
     return allowedUpdates.includes(update);
   });
-
   if (!canUpdate) {
     return res.status(400).send({ error: "RESOURCE NOT FOUND!" });
   }
-
-  const user = await User.findById(id);
-  if (!user) {
-      return res.status(404).send({ error: "User not found" });
+  try {
+    userUpdate.forEach(async (update) => {
+      user[update] = req.body[update];
+      //This is like user.name=req.body.name
+      await user.save();
+      res.status(200).send(user);
+    });
+  } catch (e) {
+    res.status(400).send({ error: e });
   }
-  userUpdate.forEach((update) => {
-    user[update] = req.body[update];
-    //This is like user.name=req.body.name
-
-     user.save()
-    res.status(200).send(user)
-
-  });
-  
-
 });
 
 //Changing Password
-router.patch("/update/:id", async (req, res) => {
+router.patch("/update/mypassword", auth, async (req, res) => {
   let { password, current } = req.body;
-  const user = await User.findById(req.params.id).then((user) => {
-    if (!user) {
-      res.status(404).send({ error: "User Not Found" });
+  const user = req.user;
+  try {
+    const isMatch = bcrypt.compare(current, user.password);
+    if (isMatch) {
+      user.password = password;
+      await user.save();
+      return res.status(200).send(user);
     }
+    res
+      .status(400)
+      .send({
+        error: "Your Old Password Did Not Match With What You Provided",
+      });
+  } catch (e) {
+    res.status(400).send({ error: err });
+  }
 
-    //console.log(user.password)
-    bcrypt.compare(current, user.password, (err, isMatch) => {
-      if (err) {
-        return res.status(400).send({ error: err });
-      }
-      if (isMatch) {
-          user.password=password
-          user.save()
-          res.send(user)
-          
-      } else {
-        res
-          .status(400)
-          .send({
-            error: "Your Old Password Did Not Match With What You Provided",
-          });
-      }
-    });
-  });
+  
 });
 
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  await User.findByIdAndUpdate(id).then((user) => {
-    if (!user) {
-      return res.status(404).send({ error: "User Not Found" });
-    }
-    user.remove();
-    res
-      .status(200)
-      .send({ success: `User with id ${id} is succesfully removed` });
-  });
+router.delete("/me", auth, async (req, res) => {
+  try {
+    const user = req.user;
+    await user.remove();
+    
+    res.status(200).send({user});
+  } 
+  catch (e) {
+    res.status(400).send({ error: e });
+  }
 });
 
 module.exports = router;

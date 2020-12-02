@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const Task=require('../models/User')
+
 const User = new mongoose.Schema(
   {
     name: {
@@ -69,6 +72,15 @@ User.pre('save', async function(next){
     next()
 })
 
+//Any time user triggers user.remove() ,I will remove the user's tasks
+User.pre('remove', async function(next){
+  const user=this
+  await Task.deleteMany({worker:user._id})
+  //Deleting many where Worker has the authenticated user's id
+  next()
+
+})
+
 //Adding a function to the user schema
 //We dont know the user yet,so we use .statics
 User.statics.loginFunc = async (email, password) => {
@@ -92,13 +104,38 @@ User.statics.loginFunc = async (email, password) => {
   //   user.userTokens = await user.userTokens.concat({token });
   //   await  user.save()
 
- 
+ //User is known
 User.methods.AuhthToken=function(){
   const user=this
   const token=jwt.sign({_id:user._id.toString()},'myfirstjsw')
   user.userTokens=user.userTokens.concat({token:token})
   user.save()
+  return token
+
 }
 
+//This method prevents a user from seeing his/her array of tokens or password when res.send(user)
+//is triggered
+User.methods.toJSON= function(){
+  const user=this
+  const userObject=user.toObject()
+  delete userObject.password
+  delete userObject.userTokens
+
+  return userObject
+}
+
+
+//Creating a virtual property to match Users and their Tasks
+User.virtual('Tasks',{
+  ref:'tasks',
+  localField:'_id',
+  foreignField:'worker'
+})
+//ref:references the collection in the other db
+//localField:The middleman b/n Users and Tasks, that is the User._id
+//foreignField:The object property that relates to the User
+
+//the 'tasks' field can be anything
 const userMOdel = mongoose.model("users", User);
 module.exports = userMOdel;
