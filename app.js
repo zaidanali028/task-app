@@ -12,6 +12,11 @@ app.use(express.json())
 const userRoute=require('./routes/task-routes/users/home')
 const taskRoute=require('./routes/task-routes/tasks/home')
 
+
+
+
+
+
 app.use('/user',userRoute)
 app.use('/task',taskRoute)
 
@@ -49,12 +54,17 @@ app.listen(port,()=>{
 // main()
 
 //Finding Tasks For A User
-const mainTwo=async ()=>{
-  const taskAuthor=await User.findById('5fc5277ad5284c1ef4c24fa1')
- // console.log(taskAuthor)
-await taskAuthor.populate('Tasks').execPopulate()
-//console.log(taskAuthor.Tasks)
+// const mainTwo=async ()=>{
+//   const taskAuthor=await User.findById('5fc5277ad5284c1ef4c24fa1')
+//  // console.log(taskAuthor)
+// await taskAuthor.populate('Tasks').execPopulate()
+// //console.log(taskAuthor.Tasks)
 
 
-}
-mainTwo()
+// }
+// mainTwo()
+
+const match={}
+match.completed=true
+//console.log(match)
+//{ completed: true } This will be logged in the console

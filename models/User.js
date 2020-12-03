@@ -3,7 +3,7 @@ const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const Task=require('../models/User')
+const Task=require('../models/task')
 
 const User = new mongoose.Schema(
   {
@@ -48,6 +48,10 @@ const User = new mongoose.Schema(
       },
       trim: true,
     },
+    avatar:{
+      type:Buffer
+
+    },
     userTokens: [
       {
         token: {
@@ -72,7 +76,7 @@ User.pre('save', async function(next){
     next()
 })
 
-//Any time user triggers user.remove() ,I will remove the user's tasks
+//Any time user triggers user.remove()  ,I will remove the user's tasks
 User.pre('remove', async function(next){
   const user=this
   await Task.deleteMany({worker:user._id})
@@ -121,6 +125,8 @@ User.methods.toJSON= function(){
   const userObject=user.toObject()
   delete userObject.password
   delete userObject.userTokens
+  delete userObject.avatar
+
 
   return userObject
 }

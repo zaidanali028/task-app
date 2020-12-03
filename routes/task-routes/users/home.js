@@ -4,6 +4,36 @@ const Task = require("../../../models/task");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const auth = require("../../../middlewares/auth");
+const multer=require('multer');
+const sharp=require('sharp')
+const { Error } = require("mongoose");
+
+
+//multer is used for uploading images
+//sharp is used for turning all images to a uniform size and file extension
+
+const upload=multer({
+ // dest:'avatar',
+  //destingation of images=images directory
+  limits:{
+    fileSize:1000000,
+    //1000,000=1mb
+  }, 
+  fileFilter(req,file,cb){
+    // if(!file.originalname.endsWith('.docx')){
+    //   return cb(new Error("Please provide a  word document with a 'docx' extension"))
+      
+    // }
+    if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
+      return cb(new Error("Please provide a picture and nothing else"))
+    }
+
+    //cb=callback
+    cb(undefined,true)
+
+  }
+})
+
 //Status Codes
 //200=Ok!
 //201=Something has been Created!
@@ -132,6 +162,61 @@ router.patch("/update/mypassword", auth, async (req, res) => {
   
 });
 
+//User profile picture feature
+router.post('/me/avatar',auth, upload.single('avatar'),async (req,res)=>{
+  const user=req.user
+  const buffer=await sharp(req.file.buffer).resize({width:250,height:250}).png().toBuffer()
+  //on buffer,am passing the buffer gotten from the req.dile and resizing the image and converting it to png 
+  //then convert it back to butter so that it can be stored in the database
+  user.avatar=buffer
+  await user.save()
+res.status(201).send()
+},(err,req,res,next)=>{
+  res.status(400).send({error:err.message})
+
+})
+
+//Deleting user profille picture
+router.delete('/me/avatar',auth,async (req,res)=>{
+  const user=req.user
+  //console.log(user)
+  try{
+  user.avatar=undefined
+  await user.save()
+  res.status(200).send({success:'User profile successfully deleted'})
+
+
+  }
+  catch(e){
+    res.status(400).send(e)
+
+  }
+
+})
+
+//getting user profile picture
+router.get('/:id/avatar',async (req,res)=>{
+
+  const user=await User.findById(req.params.id)
+  try{
+    if(!user||!user.avatar){
+      throw new Error()
+    }
+    res.set('Content-Type','image/jpg')
+    res.send(user.avatar)
+  
+
+  }
+  catch(e){
+    res.status(400).send('')
+
+  }
+  
+})
+
+
+
+//Removing user account
 router.delete("/me", auth, async (req, res) => {
   try {
     const user = req.user;
@@ -143,5 +228,7 @@ router.delete("/me", auth, async (req, res) => {
     res.status(400).send({ error: e });
   }
 });
+
+
 
 module.exports = router;
