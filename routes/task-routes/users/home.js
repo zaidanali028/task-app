@@ -176,7 +176,7 @@ res.status(201).send()
 
 })
 
-//Deleting user profille picture
+//Deleting user profille picture,ya
 router.delete('/me/avatar',auth,async (req,res)=>{
   const user=req.user
   //console.log(user)
