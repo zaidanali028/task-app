@@ -4,35 +4,38 @@ const Task = require("../../../models/task");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const auth = require("../../../middlewares/auth");
-const multer=require('multer');
-const sharp=require('sharp')
+const multer = require("multer");
+const sharp = require("sharp");
 const { Error } = require("mongoose");
+
+const {welcomeEmail,cancelationMessage}=require('../../../mail/mailer')
+
+
 
 
 //multer is used for uploading images
 //sharp is used for turning all images to a uniform size and file extension
 
-const upload=multer({
- // dest:'avatar',
+const upload = multer({
+  // dest:'avatar',
   //destingation of images=images directory
-  limits:{
-    fileSize:1000000,
+  limits: {
+    fileSize: 1000000,
     //1000,000=1mb
-  }, 
-  fileFilter(req,file,cb){
+  },
+  fileFilter(req, file, cb) {
     // if(!file.originalname.endsWith('.docx')){
     //   return cb(new Error("Please provide a  word document with a 'docx' extension"))
-      
+
     // }
-    if(!file.originalname.match(/\.(jpg|jpeg|png)$/)){
-      return cb(new Error("Please provide a picture and nothing else"))
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error("Please provide a picture and nothing else"));
     }
 
     //cb=callback
-    cb(undefined,true)
-
-  }
-})
+    cb(undefined, true);
+  },
+});
 
 //Status Codes
 //200=Ok!
@@ -57,12 +60,16 @@ router.post("/", async (req, res) => {
     age,
   });
   await newUser.save();
+  welcomeEmail(newUser.email,newUser.name)
   const token = await newUser.AuhthToken();
+  
 
   res.status(201).send({ token, newUser });
 });
 //Login in User
 router.post("/login", async (req, res) => {
+  console.log(sgApiKey);
+
   const { email, password } = req.body;
   // console.log(req.body)
   const user = await User.loginFunc(email, password);
@@ -150,85 +157,76 @@ router.patch("/update/mypassword", auth, async (req, res) => {
       await user.save();
       return res.status(200).send(user);
     }
-    res
-      .status(400)
-      .send({
-        error: "Your Old Password Did Not Match With What You Provided",
-      });
+    res.status(400).send({
+      error: "Your Old Password Did Not Match With What You Provided",
+    });
   } catch (e) {
     res.status(400).send({ error: err });
   }
-
-  
 });
 
 //User profile picture feature
-router.post('/me/avatar',auth, upload.single('avatar'),async (req,res)=>{
-  const user=req.user
-  const buffer=await sharp(req.file.buffer).resize({width:250,height:250}).png().toBuffer()
-  //on buffer,am passing the buffer gotten from the req.dile and resizing the image and converting it to png 
-  //then convert it back to butter so that it can be stored in the database
-  user.avatar=buffer
-  await user.save()
-res.status(201).send()
-},(err,req,res,next)=>{
-  res.status(400).send({error:err.message})
-
-})
+router.post(
+  "/me/avatar",
+  auth,
+  upload.single("avatar"),
+  async (req, res) => {
+    const user = req.user;
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .png()
+      .toBuffer();
+    //on buffer,am passing the buffer gotten from the req.dile and resizing the image and converting it to png
+    //then convert it back to butter so that it can be stored in the database
+    user.avatar = buffer;
+    await user.save();
+    res.status(201).send();
+  },
+  (err, req, res, next) => {
+    res.status(400).send({ error: err.message });
+  }
+);
 
 //Deleting user profille picture,ya
-router.delete('/me/avatar',auth,async (req,res)=>{
-  const user=req.user
+router.delete("/me/avatar", auth, async (req, res) => {
+  const user = req.user;
   //console.log(user)
-  try{
-  user.avatar=undefined
-  await user.save()
-  res.status(200).send({success:'User profile successfully deleted'})
-
-
+  try {
+    user.avatar = undefined;
+    await user.save();
+    res.status(200).send({ success: "User profile successfully deleted" });
+  } catch (e) {
+    res.status(400).send(e);
   }
-  catch(e){
-    res.status(400).send(e)
-
-  }
-
-})
+});
 
 //getting user profile picture
-router.get('/:id/avatar',async (req,res)=>{
-
-  const user=await User.findById(req.params.id)
-  try{
-    if(!user||!user.avatar){
-      throw new Error()
+router.get("/:id/avatar", async (req, res) => {
+  const user = await User.findById(req.params.id);
+  try {
+    if (!user || !user.avatar) {
+      throw new Error();
     }
-    res.set('Content-Type','image/jpg')
-    res.send(user.avatar)
-  
-
+    res.set("Content-Type", "image/jpg");
+    res.send(user.avatar);
+  } catch (e) {
+    res.status(400).send("");
   }
-  catch(e){
-    res.status(400).send('')
-
-  }
-  
-})
-
-
+});
 
 //Removing user account
 router.delete("/me", auth, async (req, res) => {
   try {
     const user = req.user;
     await user.remove();
-    
-    res.status(200).send({user});
-  } 
-  catch (e) {
+
+    cancelationMessage(user.email,user.name)
+
+
+    res.status(200).send({ user });
+  } catch (e) {
     res.status(400).send({ error: e });
   }
 });
-
-
 
 module.exports = router;
