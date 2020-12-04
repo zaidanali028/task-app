@@ -52,8 +52,11 @@ router.get("/", auth, async (req, res) => {
 
   if (req.query.sortBy) {
     const parts = req.query.sortBy.split("_");
+    //parts=cretedAt_desc?
+    //parts[0]=createdAt
+    //parts[1]=desc
     sort[parts[0]] = parts[1] === "desc" ? -1 : 1;
-    //sort.createdAt
+    //sort.createdAt=desc
    //if parts[1]===desc sort.createdAt=-1 or 1 if otherwise
    //-1=descending(newest to oldest)
    //1=ascending (oldest to newest)
