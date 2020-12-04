@@ -68,7 +68,6 @@ router.post("/", async (req, res) => {
 });
 //Login in User
 router.post("/login", async (req, res) => {
-  console.log(sgApiKey);
 
   const { email, password } = req.body;
   // console.log(req.body)

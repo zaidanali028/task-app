@@ -1,3 +1,4 @@
+require('dotenv').config()
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
@@ -111,7 +112,7 @@ User.statics.loginFunc = async (email, password) => {
  //User is known
 User.methods.AuhthToken=function(){
   const user=this
-  const token=jwt.sign({_id:user._id.toString()},'myfirstjsw')
+  const token=jwt.sign({_id:user._id.toString()},process.env.JWT_SEC)
   user.userTokens=user.userTokens.concat({token:token})
   user.save()
   return token

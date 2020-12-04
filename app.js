@@ -1,10 +1,11 @@
 require('dotenv').config()
 const mongoose=require('mongoose')
-const dbUrI=process.env.BD_URI
+
 const express=require('express')
 const app=express()
-
-const port=process.env.PORT
+const db=require('./config/db')
+const dbURI=db.dbUrI
+const port=process.env.PORT||5151
 
 
 app.use(express.urlencoded({extended:true}))
@@ -25,7 +26,7 @@ const Taskdb=require('./models/task')
 //console.log(dbUrI)
 //db connection
 mongoose
-  .connect(dbUrI, { useNewUrlParser: true, useUnifiedTopology: true,useCreateIndex:true })
+  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true,useCreateIndex:true })
   .then((connected) => {
     console.log("db connected.....");
   })
@@ -37,7 +38,6 @@ mongoose
 
 app.listen(port,()=>{
     console.log(`App listening on port ${port}...`)
-    console.log(dbUrI,port)
 })
 
 //#############################============TESTINGS====================############################
