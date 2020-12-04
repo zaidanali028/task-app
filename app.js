@@ -17,7 +17,10 @@ const taskRoute=require('./routes/task-routes/tasks/home')
 
 
 
-
+//welcome page
+app.get('/',(req,res)=>{
+  res.status(200).send({successGET:'Successfully did your first GET request to king-task-api-app! cheese :)'})
+  })
 app.use('/user',userRoute)
 app.use('/task',taskRoute)
 

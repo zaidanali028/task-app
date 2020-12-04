@@ -46,6 +46,7 @@ const upload = multer({
 //503=Service unavailable
 //401=Unauthorized
 
+
 //Registering a user
 router.post("/", async (req, res) => {
   const { name, email, password, age } = req.body;
