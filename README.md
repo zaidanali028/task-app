@@ -457,7 +457,7 @@
     #Emailing Users
     #Password reset through SMS among others
 
-    Thank you once again for your time :)
+    Thank you once again for your time :) .
 
 
 ```
